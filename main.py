@@ -106,8 +106,8 @@ class QAgent():
         x, y = state
         x_prime, y_prime = state_prime
         # Q-learning 업데이트 식을 이용함.
-        # SARSA와는 다르게 다음 Action을 선택하지 않음.
-        self.q_table[x, y, action] = self.q_table[x, y, action] + 0.1 * (reward + 1 * np.argmax(self.q_table[x_prime, y_prime, :]) - self.q_table[x, y, action])
+        # SARSA와는 다르게 다음 Action을 Greedy하게 선택
+        self.q_table[x, y, action] = self.q_table[x, y, action] + 0.1 * (reward + 1 * np.amax(self.q_table[x_prime, y_prime, :]) - self.q_table[x, y, action])
 
     def anneal_eps(self):
         self.eps -= 0.01 # Q-learning에서는 천천히 줄어들도록 함
@@ -123,3 +123,23 @@ class QAgent():
                 action = np.argmax(col)
                 data[row_idx, col_idx] = action
         print(data.T)
+
+def main():
+    env = GridWorld()
+    agent = QAgent()
+
+    for n_epi in range(1000): # 1000번의 Episode 진행
+        done = False
+
+        env.reset()
+        state = env.get_state()
+        while not done:
+            action = agent.select_action(state)
+            state_prime, reward, done = env.step(action)
+            agent.update_table((state, action, reward, state_prime))
+            state = state_prime
+        agent.anneal_eps()
+
+    agent.show_table()
+
+main()
